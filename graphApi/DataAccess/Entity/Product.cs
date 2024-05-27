@@ -28,8 +28,10 @@ namespace graphApi.DataAccess.Entity
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
-        public Money Price { get; set; } = new(0);
+        public double Price { get; set; }
         public PriceRange PriceRange { get; set; } = new(0, 0);
+
+        public List<Collection> Collections { get; set; } = [];
     }
 
     public class PriceRange(double minVariantPrice, double maxVariantPrice)
@@ -47,7 +49,7 @@ namespace graphApi.DataAccess.Entity
         public string Title { get; set; } = string.Empty;
         public bool AvailableForSale { get; set; }
         public List<SelectedOptions> SelectedOptions { get; set; } = [];
-        public Money Price { get; set; } = new(0);
+        public double Price { get; set; }
 
         [ForeignKey("Product")]
         public int ProductId { get; set; }

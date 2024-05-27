@@ -10,13 +10,6 @@ namespace graphApi.DataAccess.DAO
             return query
                 .Include(c => c.Lines)
                 .ThenInclude(l => l.Cost)
-                .ThenInclude(c => c.SubtotalAmount)
-                .Include(c => c.Lines)
-                .ThenInclude(l => l.Cost)
-                .ThenInclude(c => c.TotalAmount)
-                .Include(c => c.Lines)
-                .ThenInclude(l => l.Cost)
-                .ThenInclude(c => c.TotalTaxAmount)
                 .Include(c => c.Lines)
                 .ThenInclude(l => l.Merchandise)
                 .Include(c => c.Lines)
@@ -24,7 +17,6 @@ namespace graphApi.DataAccess.DAO
                 .ThenInclude(m => m.SelectedOptions)
                 .Include(c => c.Lines)
                 .ThenInclude(l => l.Merchandise)
-                .ThenInclude(m => m.Price)
                 .Include(c => c.Lines)
                 .ThenInclude(l => l.Merchandise);
         }
@@ -32,12 +24,7 @@ namespace graphApi.DataAccess.DAO
         public static IQueryable<Cart> IncludeCost(this IQueryable<Cart> query)
         {
             return query
-                .Include(l => l.Cost)
-                .ThenInclude(c => c.SubtotalAmount)
-                .Include(l => l.Cost)
-                .ThenInclude(c => c.TotalAmount)
-                .Include(l => l.Cost)
-                .ThenInclude(c => c.TotalTaxAmount);
+                .Include(l => l.Cost);
         }
 
         public static IQueryable<Cart> IncludeProduct(this IQueryable<Cart> query)

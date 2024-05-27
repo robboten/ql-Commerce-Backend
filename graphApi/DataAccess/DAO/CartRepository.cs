@@ -1,6 +1,6 @@
 ﻿using System;
 using graphApi.DataAccess.Entity;
-using graphApi.Migrations;
+
 using Microsoft.EntityFrameworkCore;
 
 namespace graphApi.DataAccess.DAO
@@ -25,7 +25,6 @@ namespace graphApi.DataAccess.DAO
                 .ThenInclude(l => l.Merchandise)
                 .ThenInclude(m => m.SelectedOptions)
                 .Include(c => c.Cost)
-                .ThenInclude(m => m.TotalAmount)
                 .ToList();
         }
 
@@ -54,9 +53,9 @@ namespace graphApi.DataAccess.DAO
                 CheckoutUrl = "",
                 Cost = new()
                 {
-                    SubtotalAmount = new(0),
-                    TotalAmount = new(0),
-                    TotalTaxAmount = new(0)
+                    SubtotalAmount = 0,
+                    TotalAmount = 0,
+                    TotalTaxAmount = 0
                 }
             };
             await _sampleAppDbContext.Cart.AddAsync(newCart);
@@ -83,7 +82,6 @@ namespace graphApi.DataAccess.DAO
                 _sampleAppDbContext
                     .ProductVariant.Where(e => e.Id == lines[0].Id)
                     .Include(e => e.Product)
-                    .Include(e => e.Price)
                     .Include(e => e.SelectedOptions)
                     .FirstOrDefault() ?? throw new Exception("Variant not found");
             ;
@@ -92,10 +90,10 @@ namespace graphApi.DataAccess.DAO
             {
                 Quantity = lines[0].Quantity,
                 Merchandise = variant,
-                Cost = new() { SubtotalAmount = variant.Price, TotalAmount = new(variant.Price.Amount * lines[0].Quantity) }
+                Cost = new() { SubtotalAmount = variant.Price, TotalAmount = variant.Price * lines[0].Quantity }
             };
 
-            var tax = newCartItem.Cost.TotalAmount.Amount * 0.3;
+            var tax = newCartItem.Cost.TotalAmount * 0.3;
 
             var newCart = new Cart
             {
@@ -103,8 +101,8 @@ namespace graphApi.DataAccess.DAO
                 Cost = new()
                 {
                     SubtotalAmount = newCartItem.Cost.SubtotalAmount,
-                    TotalAmount = new(newCartItem.Cost.TotalAmount.Amount + tax),
-                    TotalTaxAmount = new(tax)
+                    TotalAmount = newCartItem.Cost.TotalAmount + tax,
+                    TotalTaxAmount = tax ?? 0
                 },
                 Lines = [newCartItem],
                 TotalQuantity = lines[0].Quantity
@@ -153,17 +151,17 @@ namespace graphApi.DataAccess.DAO
                 var existingLine = cart.Lines.FirstOrDefault(l => l.Id == lineUpdate.Id) ?? throw new Exception($"Line with ID {lineUpdate.Id} not found in cart");
                 existingLine.Quantity = lineUpdate.Quantity;
 
-                existingLine.Cost.TotalAmount = new(
+                existingLine.Cost.TotalAmount =
                     _sampleAppDbContext.ProductVariant
                         .Where(v => v.Id == lineUpdate.MerchandiseId)
-                        .Select(v => v.Price.Amount)
-                        .FirstOrDefault() * lineUpdate.Quantity
-                );
+                        .Select(v => v.Price)
+                        .FirstOrDefault() * lineUpdate.Quantity;
+           
             }
 
             cart.TotalQuantity = cart.Lines.Select(l => l.Quantity).Sum();
 
-            var subtotalCost = cart.Lines.Select(l => l.Cost.TotalAmount?.Amount ?? 0).Sum();
+            var subtotalCost = cart.Lines.Select(l => l.Cost.TotalAmount ?? 0).Sum();
             var totalQuantity = cart.Lines.Select(l => l.Quantity).Sum();
             var tax = subtotalCost * 0.3;
 
@@ -171,9 +169,9 @@ namespace graphApi.DataAccess.DAO
 
             cart.Cost = new()
             {
-                SubtotalAmount = new(subtotalCost),
-                TotalAmount = new(subtotalCost + tax),
-                TotalTaxAmount = new(tax)
+                SubtotalAmount = subtotalCost,
+                TotalAmount = subtotalCost + tax,
+                TotalTaxAmount = tax
             };
 
             _sampleAppDbContext.Cart.Update(cart);
@@ -198,7 +196,6 @@ namespace graphApi.DataAccess.DAO
                 _sampleAppDbContext
                     .ProductVariant.Where(e => e.Id == lines[0].Id)
                     .Include(e => e.Product)
-                    .Include(e => e.Price)
                     .Include(e => e.SelectedOptions)
                     .FirstOrDefault() ?? throw new Exception("Variant not found");
             ;
@@ -218,13 +215,13 @@ namespace graphApi.DataAccess.DAO
             if ( existingItem != null )
             {
                 existingItem.Quantity += lines[0].Quantity;
-                existingItem.Cost = new() { TotalAmount = new(variant.Price.Amount * existingItem.Quantity )};
+                existingItem.Cost = new() { TotalAmount = variant.Price * existingItem.Quantity };
             } else
             {
                 cart.Lines.Add(newCartItem);
             }   
 
-            var totalCost = cart.Lines.Select(l => l.Cost.TotalAmount?.Amount ?? 0).Sum();
+            var totalCost = cart.Lines.Select(l => l.Cost.TotalAmount ?? 0).Sum();
             var totalQuantity = cart.Lines.Select(l => l.Quantity).Sum();
             var tax = totalCost * 0.3;
 
@@ -232,9 +229,9 @@ namespace graphApi.DataAccess.DAO
 
             cart.Cost = new()
             {
-                SubtotalAmount = new(totalCost),
-                TotalAmount = new(totalCost + tax),
-                TotalTaxAmount = new(tax)
+                SubtotalAmount = totalCost,
+                TotalAmount = totalCost + tax,
+                TotalTaxAmount = tax
             };
 
             _sampleAppDbContext.Cart.Update(cart);

@@ -31,7 +31,6 @@ namespace graphApi.DataAccess.DAO
                 .Include(e => e.Variants)
                 .ThenInclude(v => v.SelectedOptions)
                 .Include(e => e.Variants)
-                .ThenInclude(v => v.Price)
                 .Include(e => e.Options)
                 .Where(e => e.Handle == handle)
                 .FirstOrDefault();

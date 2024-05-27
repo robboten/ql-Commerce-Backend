@@ -2,7 +2,6 @@
 using System.Text.RegularExpressions;
 using Bogus;
 using graphApi.DataAccess.Entity;
-using graphApi.Migrations;
 using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.EntityFrameworkCore;
 using static System.Net.Mime.MediaTypeNames;
@@ -19,13 +18,13 @@ namespace graphApi.DataAccess
         public static async Task InitAsync(SampleAppDbContext ctx)
         {
             //if any product exists don't seed again
-            if (await ctx.Product.AnyAsync()) return;
-            products = GenerateProducts(400);
+           // if (await ctx.Product.AnyAsync()) return;
+            //products = GenerateProducts(400);
             pages = GeneratePages(4);
-            productCollections = GenerateCollections(products);
+            productCollections = GenerateCollections();
             menuCollections = GenerateMenus();
 
-            ctx.AddRange(products);
+            //ctx.AddRange(products);
             ctx.AddRange(pages);
             ctx.AddRange(productCollections);
             ctx.AddRange(menuCollections);
@@ -93,7 +92,7 @@ namespace graphApi.DataAccess
             return menus;
         }
 
-        private static List<Product> GenerateProducts(int amount)
+        private static List<Product> GenerateProducts(int amount, string keyword)
         {
             var faker = new Faker<Product>()
                 .Rules(
@@ -107,10 +106,10 @@ namespace graphApi.DataAccess
                         o.Seo = new() { Title = f.Lorem.Word(), Description = f.Lorem.Sentence(), };
                         //o.Handle = Regex.Replace(f.Commerce.Product().ToLowerInvariant(), @"\s", "_");
 
-                        o.Price = new(Math.Round(f.Random.Double() * 100, 0));
+                        o.Price = Math.Round(f.Random.Double() * 100, 0);
                         o.FeaturedImage = new()
                         {
-                            Url = f.Image.PicsumUrl(),
+                            Url = f.Image.LoremFlickrUrl(640, 480, keyword),
                             AltText = "Featured Image Alt Text",
                             Width = 640,
                             Height = 480
@@ -119,21 +118,21 @@ namespace graphApi.DataAccess
                         [
                             new()
                             {
-                                Url = f.Image.PicsumUrl(),
+                                Url = f.Image.LoremFlickrUrl(640, 480, keyword),
                                 AltText = "Image Alt Text",
                                 Width = 640,
                                 Height = 480
                             },
                             new()
                             {
-                                Url = f.Image.PicsumUrl(),
+                                Url = f.Image.LoremFlickrUrl(640, 480, keyword),
                                 AltText = "Image Alt Text",
                                 Width = 640,
                                 Height = 480
                             },
                             new()
                             {
-                                Url = f.Image.PicsumUrl(),
+                                Url = f.Image.LoremFlickrUrl(640, 480, keyword),
                                 AltText = "Image Alt Text",
                                 Width = 640,
                                 Height = 480
@@ -148,7 +147,7 @@ namespace graphApi.DataAccess
                                     + f.Random.ArrayElement(sizes)
                                     + f.Random.Int().ToString(),
                                 AvailableForSale = true,
-                                Price = new(Math.Round(f.Random.Double() * 1000, 0)),
+                                Price = Math.Round(f.Random.Double() * 1000, 0),
                                 SelectedOptions =
                                 [
                                     new() { Name = "Color", Value = f.Random.ArrayElement(colors) },
@@ -162,7 +161,7 @@ namespace graphApi.DataAccess
                                     + f.Random.ArrayElement(sizes)
                                     + f.Random.Int().ToString(),
                                 AvailableForSale = true,
-                                Price = new(Math.Round(f.Random.Double() * 1000, 0)),
+                                Price = Math.Round(f.Random.Double() * 1000, 0),
                                 SelectedOptions =
                                 [
                                     new() { Name = "Color", Value = f.Random.ArrayElement(colors) },
@@ -176,7 +175,7 @@ namespace graphApi.DataAccess
                                     + f.Random.ArrayElement(sizes)
                                     + f.Random.Int().ToString(),
                                 AvailableForSale = true,
-                                Price = new(Math.Round(f.Random.Double() * 1000, 0)),
+                                Price = Math.Round(f.Random.Double() * 1000, 0),
                                 SelectedOptions =
                                 [
                                     new() { Name = "Color", Value = f.Random.ArrayElement(colors) },
@@ -190,7 +189,7 @@ namespace graphApi.DataAccess
                                     + f.Random.ArrayElement(sizes)
                                     + f.Random.Int().ToString(),
                                 AvailableForSale = true,
-                                Price = new(Math.Round(f.Random.Double() * 1000, 0)),
+                                Price = Math.Round(f.Random.Double() * 1000, 0),
                                 SelectedOptions =
                                 [
                                     new() { Name = "Color", Value = f.Random.ArrayElement(colors) },
@@ -204,7 +203,7 @@ namespace graphApi.DataAccess
                                     + f.Random.ArrayElement(sizes)
                                     + f.Random.Int().ToString(),
                                 AvailableForSale = true,
-                                Price = new(Math.Round(f.Random.Double() * 1000, 0)),
+                                Price = Math.Round(f.Random.Double() * 1000, 0),
                                 SelectedOptions =
                                 [
                                     new() { Name = "Color", Value = f.Random.ArrayElement(colors) },
@@ -218,8 +217,8 @@ namespace graphApi.DataAccess
                             new() { Name = "Size", Values = sizes }
                         ];
                         o.PriceRange = new PriceRange(
-                            o.Variants.Min(e=>e.Price.Amount),
-                            o.Variants.Max(e => e.Price.Amount)
+                            o.Variants.Min(e=>e.Price),
+                            o.Variants.Max(e => e.Price)
                         );
                     }
                 )
@@ -282,8 +281,9 @@ namespace graphApi.DataAccess
             return pages;
         }
 
-        private static List<Collection> GenerateCollections(List<Product> products)
+        private static List<Collection> GenerateCollections()
         {
+            var products = GenerateProducts(50, "electronics");
             var collections = new List<Collection>();
             var electronicsCollection = new Faker<Collection>()
                 .Rules(
@@ -292,11 +292,12 @@ namespace graphApi.DataAccess
                         o.Title = "Electronics";
                         o.Handle = "electronics";
                         o.Description = f.Lorem.Paragraphs(1);
-                        o.Products = f.Random.ArrayElements<Product>([.. products], 50).ToList();
+                        o.Products = products.ToList();
                     }
                 )
                 .Generate();
 
+            products = GenerateProducts(50, "toys");
             var toysCollection = new Faker<Collection>()
                 .Rules(
                     (f, o) =>
@@ -304,11 +305,12 @@ namespace graphApi.DataAccess
                         o.Title = "Toys";
                         o.Handle = "toys";
                         o.Description = f.Lorem.Paragraphs(2);
-                        o.Products = f.Random.ArrayElements<Product>([.. products], 50).ToList();
+                        o.Products = products.ToList();
                     }
                 )
                 .Generate();
 
+            products = GenerateProducts(20, "posters");
             var postersCollection = new Faker<Collection>()
                 .Rules(
                     (f, o) =>
@@ -316,11 +318,12 @@ namespace graphApi.DataAccess
                         o.Title = "Posters";
                         o.Handle = "posters";
                         o.Description = f.Lorem.Paragraphs(1);
-                        o.Products = f.Random.ArrayElements<Product>([.. products], 20).ToList();
+                        o.Products = products.ToList();
                     }
                 )
                 .Generate();
 
+            products = GenerateProducts(100, "clothes");
             var clothesCollection = new Faker<Collection>()
                 .Rules(
                     (f, o) =>
@@ -328,7 +331,7 @@ namespace graphApi.DataAccess
                         o.Title = "Clothes";
                         o.Handle = "clothes";
                         o.Description = f.Lorem.Paragraphs(1);
-                        o.Products = f.Random.ArrayElements<Product>([.. products], 60).ToList();
+                        o.Products = products.ToList();
                     }
                 )
                 .Generate();
@@ -340,7 +343,7 @@ namespace graphApi.DataAccess
                         o.Title = "Carousel Home";
                         o.Handle = "hidden-homepage-carousel";
                         o.Description = f.Lorem.Paragraphs(1);
-                        o.Products = f.Random.ArrayElements<Product>([.. products], 10).ToList();
+                        o.Products = f.Random.ArrayElements<Product>([.. clothesCollection.Products], 10).ToList();
                     }
                 )
                 .Generate();
@@ -352,7 +355,7 @@ namespace graphApi.DataAccess
                         o.Title = "Featured Items";
                         o.Handle = "hidden-homepage-featured-items";
                         o.Description = f.Lorem.Paragraphs();
-                        o.Products = f.Random.ArrayElements<Product>([.. products], 10).ToList();
+                        o.Products = f.Random.ArrayElements<Product>([.. toysCollection.Products], 10).ToList();
                     }
                 )
                 .Generate();

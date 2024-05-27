@@ -18,9 +18,9 @@ namespace graphApi.DataAccess.Entity
     {
         [Key]
         public int Id { get; set; }
-        public Money? SubtotalAmount { get; set; }
-        public Money? TotalAmount { get; set; }
-        public Money? TotalTaxAmount { get; set; }
+        public double? SubtotalAmount { get; set; }
+        public double? TotalAmount { get; set; }
+        public double TotalTaxAmount { get; set; }
     }
 
     public class CartItem

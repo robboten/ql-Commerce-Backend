@@ -21,7 +21,6 @@ namespace graphApi.DataAccess.DAO
         {
             var collection = _sampleAppDbContext
                 .Collection.Include(e => e.Products)
-                .ThenInclude(p => p.Price)
                 .Include(e => e.Products)
                 .ThenInclude(p => p.Images)
                 .Include(e => e.Products)
@@ -35,7 +34,6 @@ namespace graphApi.DataAccess.DAO
                 .ThenInclude(v => v.SelectedOptions)
                 .Include(e => e.Products)
                 .ThenInclude(p => p.Variants)
-                .ThenInclude(v => v.Price)
                 .Include(e => e.Seo)
                 .Where(e => e.Handle == handle)
                 .FirstOrDefault();
